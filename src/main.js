@@ -4,11 +4,12 @@ const CONFIG = {
   apiKey: "qk5IRigWesBxqBBwEQ1L",
   serverUrl: "https://serverless.roboflow.com",
   workspaceName: "siddhantsatotes-workspace",
-  workflowId: "detect-count-and-visualize",
-  streamOutputNames: ["output_image"],
-  dataOutputNames: ["count_objects", "predictions"],
+  workflowId: "general-segmentation-api",
+  streamOutputNames: ["annotated_image"],
+  dataOutputNames: ["predictions"],
   requestedPlan: "webrtc-gpu-medium",
   requestedRegion: "us",
+  classes: "drone"
 };
 
 let connection = null;
@@ -76,6 +77,9 @@ async function startDetection() {
         processingTimeout: 3600,
         requestedPlan: CONFIG.requestedPlan,
         requestedRegion: CONFIG.requestedRegion,
+        workflowsParameters: {
+          classes: CONFIG.classes
+        }
       },
       onData: (data) => {
         console.log("Detection data:", data);
