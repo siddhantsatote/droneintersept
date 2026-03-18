@@ -1,6 +1,8 @@
 import { connectors, webrtc, streams } from "@roboflow/inference-sdk";
 
 const CONFIG = {
+  apiKey: "qk5IRigWesBxqBBwEQ1L",
+  serverUrl: "https://serverless.roboflow.com",
   workspaceName: "siddhantsatotes-workspace",
   workflowId: "detect-count-and-visualize",
   streamOutputNames: ["output_image"],
@@ -53,7 +55,7 @@ async function startDetection() {
     startBtn.textContent = "Connecting...";
     setStatus("connecting", "Connecting");
 
-    const connector = connectors.withProxyUrl("/api/init-webrtc");
+    const connector = connectors.withApiKey(CONFIG.apiKey, { serverUrl: CONFIG.serverUrl });
 
     const stream = await streams.useCamera({
       video: {
