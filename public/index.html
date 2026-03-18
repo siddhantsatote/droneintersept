@@ -136,11 +136,12 @@
             apiKey: 'qk5IRigWesBxqBBwEQ1L',
             serverUrl: 'https://serverless.roboflow.com',
             workspaceName: 'siddhantsatotes-workspace',
-            workflowId: 'detect-count-and-visualize',
-            streamOutputNames: ['output_image'],
-            dataOutputNames: ['count_objects', 'predictions'],
-            requestedPlan: 'webrtc-gpu-large',
-            requestedRegion: 'us'
+            workflowId: 'general-segmentation-api',
+            streamOutputNames: ['annotated_image'],
+            dataOutputNames: ['predictions'],
+            requestedPlan: 'webrtc-gpu-medium',
+            requestedRegion: 'us',
+            classes: 'drone'
         };
 
         let connection = null;
@@ -199,11 +200,13 @@
                         dataOutputNames: CONFIG.dataOutputNames,
                         processingTimeout: 3600,
                         requestedPlan: CONFIG.requestedPlan,
-                        requestedRegion: CONFIG.requestedRegion
+                        requestedRegion: CONFIG.requestedRegion,
+                        workflowsParameters: {
+                            classes: CONFIG.classes
+                        }
                     },
                     onData: (data) => {
-                        if (data.count_objects !== undefined) updateCount(data.count_objects);
-                        else if (data.predictions) updateCount(data.predictions.length);
+                        if (data.predictions) updateCount(data.predictions.length);
                     },
                     onError: (err) => {
                         showError('Stream Error', err.message || 'Connection lost');
