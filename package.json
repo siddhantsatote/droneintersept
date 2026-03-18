@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@roboflow/inference-sdk": "^0.1.0"
+    "@roboflow/inference-sdk": "^0.3.0"
   },
   "devDependencies": {
     "vite": "^5.0.0"
