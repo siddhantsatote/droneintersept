@@ -61,8 +61,9 @@ async function startDetection() {
     const stream = await streams.useCamera({
       video: {
         facingMode: "environment",
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
+        width: { ideal: 1920, min: 1280 },
+        height: { ideal: 1080, min: 720 },
+        frameRate: { ideal: 60, min: 30 }
       },
     });
 
