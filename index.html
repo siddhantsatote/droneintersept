@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>Drone Detector</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0a0a0a;
+        color: #fff;
+        overflow: hidden;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      #container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+      }
+
+      #video {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      #ui-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      #top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      #status-badge {
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      #status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #888;
+      }
+
+      #status-dot.connecting {
+        background: #ffa500;
+        animation: pulse 1.5s infinite;
+      }
+
+      #status-dot.streaming {
+        background: #00ff00;
+        animation: pulse 0.5s infinite;
+      }
+
+      #status-dot.error {
+        background: #ff4444;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      #stats-panel {
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        font-family: "SF Mono", Monaco, monospace;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      #bottom-bar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+        padding-bottom: env(safe-area-inset-bottom, 16px);
+      }
+
+      .control-btn {
+        pointer-events: auto;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+        padding: 14px 28px;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .control-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      .control-btn:active {
+        transform: scale(0.95);
+      }
+
+      .control-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .control-btn.stop {
+        background: rgba(255, 68, 68, 0.8);
+        border-color: rgba(255, 68, 68, 0.5);
+      }
+
+      .control-btn svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      #detection-count {
+        background: rgba(37, 99, 235, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 16px;
+        font-weight: 700;
+        pointer-events: none;
+      }
+
+      #detection-count.hidden {
+        display: none;
+      }
+
+      #error-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        text-align: center;
+        z-index: 100;
+      }
+
+      #error-overlay.hidden {
+        display: none;
+      }
+
+      #error-icon {
+        font-size: 64px;
+        margin-bottom: 24px;
+      }
+
+      #error-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+
+      #error-message {
+        font-size: 16px;
+        color: #888;
+        max-width: 400px;
+        line-height: 1.5;
+      }
+
+      #start-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, #1a1a2e 0%, #0a0a0a 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        text-align: center;
+        z-index: 50;
+      }
+
+      #start-overlay.hidden {
+        display: none;
+      }
+
+      .logo {
+        font-size: 72px;
+        margin-bottom: 24px;
+      }
+
+      #start-overlay h1 {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+
+      #start-overlay p {
+        font-size: 16px;
+        color: #888;
+        margin-bottom: 32px;
+        max-width: 300px;
+      }
+
+      #start-btn {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #fff;
+        border: none;
+        padding: 18px 48px;
+        border-radius: 30px;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+        box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+      }
+
+      #start-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 30px rgba(37, 99, 235, 0.5);
+      }
+
+      #start-btn:active {
+        transform: scale(0.98);
+      }
+
+      #start-btn:disabled {
+        background: #444;
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+
+      .powered-by {
+        position: absolute;
+        bottom: 32px;
+        font-size: 12px;
+        color: #666;
+      }
+
+      .powered-by a {
+        color: #888;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <video id="video" autoplay playsinline muted></video>
+
+      <div id="ui-overlay">
+        <div id="top-bar">
+          <div id="status-badge">
+            <div id="status-dot"></div>
+            <span id="status-text">Ready</span>
+          </div>
+          <div id="stats-panel">
+            <div id="drone-count">Drones: 0</div>
+          </div>
+        </div>
+
+        <div id="bottom-bar">
+          <button class="control-btn stop" id="stop-btn" style="display: none">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="6" width="12" height="12" rx="2" />
+            </svg>
+            Stop Detection
+          </button>
+          <div id="detection-count" class="hidden">0 Drones Detected</div>
+        </div>
+      </div>
+
+      <div id="start-overlay">
+        <div class="logo">🛸</div>
+        <h1>Drone Detector</h1>
+        <p>
+          Real-time drone detection using AI. Point your camera at the sky to
+          detect drones.
+        </p>
+        <button id="start-btn">Start Detection</button>
+        <div class="powered-by">
+          Powered by <a href="https://roboflow.com" target="_blank">Roboflow</a>
+        </div>
+      </div>
+
+      <div id="error-overlay" class="hidden">
+        <div id="error-icon">⚠️</div>
+        <div id="error-title">Error</div>
+        <div id="error-message"></div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
